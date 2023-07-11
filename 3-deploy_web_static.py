@@ -12,6 +12,7 @@ env.hosts = ["54.145.240.186", "54.175.134.147"]
 env.user = "ubuntu"
 env.key_filename = "/root/.ssh/id_rsa"
 
+
 def do_pack():
     '''Generates a .tgz archive from the contents of the web_static folder
     of AirBnB_clone_v2
@@ -33,7 +34,6 @@ def do_pack():
     print("web_static packed: {} -> {}Bytes".format(file_name, file_size))
 
     return file_name
-
 
 
 def do_deploy(archive_path):
@@ -71,6 +71,7 @@ def do_deploy(archive_path):
 
     print("New version deployed!")
     return True
+
 
 def deploy():
     """Create and distribute an archive to web servers"""
