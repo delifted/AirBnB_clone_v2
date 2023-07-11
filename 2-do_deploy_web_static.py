@@ -1,23 +1,24 @@
 #!/usr/bin/python3
-"""A Fabric script that distributes an archive to specified web servers
-"""
+"""A Fabric script that generates a .tgz archive from the contents of
+AirBnB_clone_v2 web_static folder"""
+
 from datetime import datetime
-from fabric.api import env, put, run, local, settings
 import os
+from fabric.api import env, put, run, sudo, local, settings
 
 
+# Define your server IP and credentials
 env.hosts = ["54.145.240.186", "54.175.134.147"]
 env.user = "ubuntu"
-env.key_filename = "~/.ssh/main_new"
-
+env.key_filename = "/root/.ssh/id_rsa"
 
 def do_pack():
-    """Generates a .tgz archive from the contents of the web_static folder
+    '''Generates a .tgz archive from the contents of the web_static folder
     of AirBnB_clone_v2
 
     Returns:
-        str: Path to the archive created
-    """
+        str: Path to the archive created'''
+
     if not os.path.isdir("versions"):
         os.makedirs("versions")
     date = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -34,34 +35,39 @@ def do_pack():
     return file_name
 
 
+
 def do_deploy(archive_path):
-    """Distributes an archive to specified web servers
-
-    Args:
-        archive_path (str): Path to archive to be distributed
-
-    Returns:
-        bool: True if all operations were successful, False otherwise
-    """
+    """Distributes an archive to the web servers and deploys it"""
     if not os.path.exists(archive_path):
         return False
 
-    file_name = archive_path.split("/")[-1]
-    file_name_no_ext = file_name.split(".")[0]
-    dest = "/data/web_static/releases/{}".format(file_name_no_ext)
+    archive_name = os.path.basename(archive_path)
+    remote_path = "/tmp/{}".format(archive_name)
+    release_path = "/data/web_static/releases/{}".format(
+        archive_name.replace(".tgz", "").replace("web_static_", "")
+    )
 
-    try:
-        put(archive_path, "/tmp/")
-        run("mkdir -p {}".format(dest))
-        run("tar -xzf /tmp/{} -C {}/".format(file_name, dest))
-        run("mv {}/web_static/* {}/".format(dest, dest))
+    # Upload the archive to the /tmp/ directory of the web server
+    put(archive_path, remote_path)
 
-        run("rm /tmp/{}".format(file_name))
-        run("rm -rf {}/web_static".format(dest))
-        run("rm -rf /data/web_static/current")
-        run("ln -s {}/ /data/web_static/current".format(dest))
-    except Exception:
-        return False
-    else:
-        print("New version deployed!")
-        return True
+    # Uncompress the archive to the release_path on the web server
+    run("mkdir -p {}".format(release_path))
+    run("tar -xzf {} -C {}".format(remote_path, release_path))
+
+    # Delete the archive from the web server
+    run("rm {}".format(remote_path))
+
+    # Move the contents of the web_static folder to the release_path
+    run("mv {}/web_static/* {}".format(release_path, release_path))
+
+    # Remove the empty web_static folder
+    run("rm -rf {}/web_static".format(release_path))
+
+    # Delete the symbolic link /data/web_static/current from the web server
+    run("rm -rf /data/web_static/current")
+
+    # Create a new symbolic link to the new version of your code
+    run("ln -s {} /data/web_static/current".format(release_path))
+
+    print("New version deployed!")
+    return True

@@ -3,8 +3,8 @@
 AirBnB_clone_v2 web_static folder"""
 
 from datetime import datetime
-from fabric.api import local, settings
 import os
+from fabric.api import local, settings
 
 
 def do_pack():
@@ -13,7 +13,7 @@ def do_pack():
 
     Returns:
         str: Path to the archive created'''
-   
+
     if not os.path.isdir("versions"):
         os.makedirs("versions")
     date = datetime.now().strftime("%Y%m%d%H%M%S")
