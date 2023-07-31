@@ -13,11 +13,8 @@ class FileStorage:
     __file_path = "file.json"
     __objects = {}
 
-    def all(self, cls=None):
-        if cls is None:
-            return self.__objects
-        else:
-            return {key: value for key, value in self.__objects.items() if isinstance(value, cls)}
+    def all(self):
+        return self.__objects
 
     def new(self, obj):
         key = f"{obj.__class__.__name__}.{obj.id}"
@@ -41,10 +38,6 @@ class FileStorage:
                     self.__objects[key] = class_(**value)
         except FileNotFoundError:
             pass
-
-    def close(self):
-        '''Calls reload() method for deserializing the JSON file to objects'''
-        self.reload()
 
 storage = FileStorage()
 storage.reload()
